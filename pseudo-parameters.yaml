@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation template to crate and ssm parameter and iam role
+
+
+Parameters:
+  dbUserName:
+    Type: String
+    Default: alice
+    AllowedPattern: ^[a-z0-9]{5,12}$
+    Description: Value to be used with the dbUsername SSM parameter. The default value is set to 'alice', which users can override when creating a CloudFormation stack.
+  AmiID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: The ID of the AMI.
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+
+Resources:
+  BasicParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: !Ref dbUserName
+      Name: dbUserName
+      Description: SSM Parameter for database username.
+  DbIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: ssm-least-privilege
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource:  !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${BasicParameter}'
+  dbS3Data:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'my-db-data-bucket-${AWS::Region}-${AWS::AccountId}'
+  DbLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      Role: !GetAtt DbIamRole.Arn
+      Runtime: python3.12
+      Code:
+        ZipFile: |
+          import boto3
+
+          ssmClient = boto3.client('ssm')
+          
+
+          def lambda_handler(event, context):
+              response = ssmClient.get_parameter(Name='dbUserName')
+              print(f'SSM dbUsername parameter value: {response["Parameter"]["Value"]}')
+              

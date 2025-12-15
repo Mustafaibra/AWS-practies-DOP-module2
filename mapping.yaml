@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation template to practies on mapping 
+
+Parameters:
+  EnvironmentType:
+    Description: 'Specify the Environment type of the stack.'
+    Type: String
+    Default: Dev
+    AllowedValues:
+      - Test
+      - Prod
+      - Dev
+    ConstraintDescription: 'Specify either Test or Prod.'
+  AmiID:
+   Type: AWS::EC2::Image::Id
+   Default: ami-0b46816ffa1234887
+   Description: 'The ID of the AMI.'
+
+Mappings:
+  EnvironmentToInstanceType: # Map Name
+    Test: # Top level key
+      InstanceType: t3.micro # Second level key
+    Dev:
+      InstanceType: t3.micro
+    Prod:
+      InstanceType: t3.micro
+
+
+
+Resources:
+  WebServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiID
+      InstanceType: !FindInMap
+        - EnvironmentToInstanceType # Map Name
+        - !Ref EnvironmentType # Top Level Key
+        - InstanceType # Second Level Key
+      Tags:
+        - Key: name
+          Value: !Join [ '-', [ !Ref EnvironmentType, 'webserver' ] ]

@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation template to create an Ec2 instance
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "EC2 Instance Configuration"
+        Parameters:
+          - InstanceType
+          - environment
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small    
+    Description: 'Enter t3.micro or t3.small. Default is t3.micro.'
+  environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: 'Enter Dev, Test or Prod. Default is Dev.'
+  AmiID:
+   Type: AWS::EC2::Image::Id
+   Description: 'The ID of the AMI.'
+Resources:
+  WebServerInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiID
+      #ImageId: !Sub '{{resolve:ssm:/cfn-ami/${environment}}}'
+      Tags:
+        - Key: env
+          Value: !Ref  environment
+        - Key: Name
+          Value: !Join [ '- ', [ !Ref InstanceType , webserver]  ]
+
+

@@ -1,0 +1,16 @@
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cfn-bucket-2026
+      Tags:
+        - Key: project
+          Value: DLS
+        - Key: Environment
+          Value: Default
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
