@@ -1,0 +1,64 @@
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+  #AmiIDSSMParameter:
+  #  Type: String
+  #  Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  IamInstanceProfile:
+    Type: String
+    Default: EC2InstanceProfile
+  AmiID:
+    Type: 'AWS::EC2::Image::Id'
+    Default: 'ami-015f3aa67b494b27e'
+  EnvironmentType:
+    Description: 'Specify the Environment type of the stack.'
+    Type: String
+    Default: Test
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'The VPC ID'
+
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: 'The Subnet ID'
+
+Resources:
+  WebServerInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiID
+      #ImageId: !Sub '{{resolve:ssm:/golden-images/amazon-linux-2:2}}'
+      IamInstanceProfile: !Ref IamInstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:                # <-- Add this block
+        - !Ref WebServerSecurityGroup 
+      Tags:
+        - Value: env
+          Key: !Ref EnvironmentType
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and HTTPS access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+Outputs:
+  WebsiteURL:
+    Description: "URL of the web server"
+    Value: !Sub "http://${WebServerInstance.PublicDnsName}"
+      
