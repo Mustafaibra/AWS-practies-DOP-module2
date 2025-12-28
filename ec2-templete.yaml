@@ -24,16 +24,17 @@ Parameters:
       - test
       - prod
     Description: 'Enter Dev, Test or Prod. Default is Dev.'
-  AmiID:
-   Type: AWS::EC2::Image::Id
-   Description: 'The ID of the AMI.'
+  # AmiID:
+  #  Type: AWS::EC2::Image::Id
+  #  Description: 'The ID of the AMI.'
+  #  Default: ami-0b46816ffa1234887
 Resources:
   WebServerInstance:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: !Ref InstanceType
-      ImageId: !Ref AmiID
-      #ImageId: !Sub '{{resolve:ssm:/cfn-ami/${environment}}}'
+      #ImageId: !Ref AmiIDSSMParameter
+      ImageId: !Sub '{{resolve:ssm:/golden-images/amazon-linux-2:2}}'
       Tags:
         - Key: env
           Value: !Ref  environment
